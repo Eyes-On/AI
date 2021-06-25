@@ -96,145 +96,6 @@ def objectDetection(img):
 reader = easyocr.Reader(['bn'])
 
 
-# # ------------------------- OCR_v1 -------------------------
-# # OCR 버전마다 전처리 과정이 다름
-# def OCR_pn(img):
-#     img = cv2.imread(img) # 이미지 로드
-#     gray = cv2.cvtColor(img, cv2.COLOR_RGB2GRAY) # 배경에 그레이 적용
-#     gray = cv2.resize(gray, None, fx = 3, fy = 3, interpolation = cv2.INTER_CUBIC) # 사이즈 정규화(키우기)
-#     blur = cv2.GaussianBlur(gray, (5,5), 0) # 이미지에 블러 처리
-
-#     # ------------------- 기울기 조정 start -------------------
-#     canny = cv2.Canny(blur, 700, 350, apertureSize = 5, L2gradient = True) # 이미지 외곽선만 추출
-#     lines = cv2.HoughLinesP(canny, 1, np.pi / 180, 50, minLineLength = 3, maxLineGap = 150) # 직선 찾기
-
-#     angle = 0
-#     maxdim = 0
-#     # 각도 조정
-#     if not (lines is None):
-#         for i in lines:
-#             xdim = i[0][2] - i[0][0]
-#             ydim = i[0][3] - i[0][1]
-#             iangle = math.atan2(ydim, xdim)*180/np.pi
-#             dim = math.sqrt((xdim * xdim) + (ydim * ydim))
-#             if abs(angle) < 40 and maxdim < dim:
-#                 maxdim = dim
-#                 angle =iangle
-
-#     roih, roiw, roic = img.shape
-#     matrix = cv2.getRotationMatrix2D((roiw/2, roih/2), angle, 1)
-#     roi = cv2.warpAffine(img, matrix, (roiw, roih))
-#     # ------------------- 기울기 조정 fin -------------------
-
-#     roi = cv2.resize(roi, None, fx = 3, fy = 3, interpolation = cv2.INTER_CUBIC)
-#     blur_2 = cv2.GaussianBlur(roi, (5,5), 0)
-    
-#     plate_num = ""
-#     try:
-#         # tesseract OCR 적용
-#         text = pytesseract.image_to_string(blur_2, config='-c tessedit_char_whitelist=0123456789 --psm 7 --oem 1') # whitelist: 숫자만 인식
-#         plate_num = re.sub('[\W_]+', '', text) # 특수문자 제거
-#     except:
-#         text = None
-    
-#     plate_num = re.sub('[\W_]+', '', text)   
-#     return plate_num[-4:]
-
-
-# # ------------------------- OCR_v2 -------------------------
-# def OCR_pn2(img):
-#     img = cv2.imread(img)
-#     gray = cv2.cvtColor(img, cv2.COLOR_RGB2GRAY)
-#     gray = cv2.resize(gray, None, fx = 3, fy = 3, interpolation = cv2.INTER_CUBIC)
-#     blur = cv2.GaussianBlur(gray, (5,5), 0)
-    
-#     plate_num = ""
-#     try:
-#         text = pytesseract.image_to_string(blur, config='-c tessedit_char_whitelist=0123456789 --psm 7 --oem 1')
-#         plate_num = re.sub('[\W_]+', '', text)            
-#     except:
-#         text = None
-
-#     plate_num = re.sub('[\W_]+', '', text)   
-#     return plate_num[-4:]
-
-
-# # ------------------------- OCR_v3 -------------------------
-# def OCR_pn3(img):
-#     img = cv2.imread(img)
-#     gray = cv2.cvtColor(img, cv2.COLOR_RGB2GRAY)
-#     gray = cv2.resize(gray, None, fx = 3, fy = 3, interpolation = cv2.INTER_CUBIC)
-#     blur = cv2.GaussianBlur(gray, (5,5), 0)
-
-#     # ------------------- 기울기 조정 start -------------------
-#     canny = cv2.Canny(blur, 700, 350, apertureSize = 5, L2gradient = True)
-#     lines = cv2.HoughLinesP(canny, 1, np.pi / 180, 50, minLineLength = 3, maxLineGap = 150)
-
-#     angle = 0
-#     maxdim = 0
-#     if not (lines is None):
-#         for i in lines:
-#             xdim = i[0][2] - i[0][0]
-#             ydim = i[0][3] - i[0][1]
-#             iangle = math.atan2(ydim, xdim)*180/np.pi
-#             dim = math.sqrt((xdim * xdim) + (ydim * ydim))
-#             if abs(angle) < 40 and maxdim < dim:
-#                 maxdim = dim
-#                 angle =iangle
-
-#     roih, roiw, roic = img.shape
-#     matrix = cv2.getRotationMatrix2D((roiw/2, roih/2), angle, 1)
-#     roi = cv2.warpAffine(img, matrix, (roiw, roih))
-#     # ------------------- 기울기 조정 fin -------------------
-
-#     gray_2 = cv2.cvtColor(roi, cv2.COLOR_RGB2GRAY)
-#     gray_2 = cv2.resize(gray_2, None, fx = 3, fy = 3, interpolation = cv2.INTER_CUBIC)
-#     blur_2 = cv2.GaussianBlur(gray_2, (5,5), 0)
-
-#     ## 이미지 흑백 대조하기, 최적 임계값을 자동으로 추출하는 Otsus 사용
-#     ret, thresh = cv2.threshold(blur_2, 0, 255, cv2.THRESH_OTSU | cv2.THRESH_BINARY_INV)
-#     ## 확장을 위한 커널 생성
-#     rect_kern = cv2.getStructuringElement(cv2.MORPH_RECT, (5,5))
-#     ## 글씨 이미지 크기 확장
-#     dilation = cv2.dilate(thresh, rect_kern, iterations = 1)
-
-#     blur_3 = cv2.GaussianBlur(dilation, (5,5), 0)
-    
-#     plate_num = ""
-#     try:
-#         text = pytesseract.image_to_string(blur_3, config='-c tessedit_char_whitelist=0123456789 --psm 7 --oem 1')
-#         plate_num = re.sub('[\W_]+', '', text)            
-#     except:
-#         text = None
-    
-#     plate_num = re.sub('[\W_]+', '', text)   
-#     return plate_num[-4:]
-            
-        
-# # ------------------------- OCR_v4 -------------------------
-# def OCR_bn(img):
-#     img = cv2.imread(img)
-#     gray = cv2.cvtColor(img, cv2.COLOR_RGB2GRAY)
-#     gray = cv2.resize(gray, None, fx = 3, fy = 3, interpolation = cv2.INTER_CUBIC)
-#     blur = cv2.GaussianBlur(gray, (5,5), 0)
-    
-#     ## 이미지 흑백 대조하기, 최적 임계값을 자동으로 추출하는 Otsus 사용
-#     ret, thresh = cv2.threshold(blur, 0, 255, cv2.THRESH_OTSU | cv2.THRESH_BINARY_INV)
-#     ## 확장을 위한 커널 생성
-#     rect_kern = cv2.getStructuringElement(cv2.MORPH_RECT, (5,5))
-#     ## 글씨 이미지 크기 확장
-#     dilation = cv2.dilate(thresh, rect_kern, iterations = 1)
-#     blur_2 = cv2.GaussianBlur(dilation, (5,5), 0)
-    
-#     plate_num = ""
-#     try:
-#         text = pytesseract.image_to_string(blur_2, config='-c tessedit_char_whitelist=0123456789 --psm 7 --oem 1')            
-#     except:
-#         text = None
-        
-#     plate_num = re.sub('[\W_]+', '', text)   
-#     return plate_num[-4:]
-
 # ------------------------- OCR_v5 -------------------------
 def OCR_easy(img):
     img = cv2.imread(os.path.join(bus_num_fr_path, file))
@@ -252,61 +113,6 @@ def OCR_easy(img):
     plate_num = re.findall('\d+', text) 
     return plate_num[-4:]
 
-'''
-# ------------------------- 목표 버스 일치 여부 확인 함수 -------------------------
-def tfBusNum(store_img, busNum, busLicenseNum):
-    for img in store_img:
-        try:
-            preBusNum = OCR_bn(img) # OCR_v1 output
-            preBusNum2 = OCR_pn(img) # OCR_v1 output
-            preBusNum3 = OCR_pn2(img) # OCR_v1 output
-            preBusNum4 = OCR_pn3(img) # OCR_v1 output
-            print(f'busNum: {busNum}') # 목표 버스 번호 
-            print(f'busLicenseNum: {busLicenseNum}') # 목표 버스 차량번호
-            print('---------------예측-------------------')
-            print(f'prediction busNum: {preBusNum}')
-            print(f'prediction busNum2: {preBusNum2}')
-            print(f'prediction busNum3: {preBusNum3}')
-            print(f'prediction busNum4: {preBusNum4}')
-
-            # 목표 버스 번호와 일치 여부 확인
-            if preBusNum == busNum:
-                print('<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<')
-                print('>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>')
-                return True
-            if preBusNum2 == busNum:
-                print('<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<')
-                print('>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>')
-                return True
-            if preBusNum3 == busNum:
-                print('<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<')
-                print('>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>')
-                return True
-            if preBusNum4 == busNum:
-                print('<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<')
-                print('>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>')
-                return True
-
-            # 목표 버스 차량번호와 일치 여부 확인
-            if preBusNum == busLicenseNum:
-                print('<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<')
-                print('>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>')
-                return True
-            if preBusNum2 == busLicenseNum:
-                print('<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<')
-                print('>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>')
-                return True
-            if preBusNum3 == busLicenseNum:
-                print('<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<')
-                print('>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>')
-                return True
-            if preBusNum4 == busLicenseNum:
-                print('<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<')
-                print('>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>')
-                return True
-        except:
-            continue
-'''
     
 # ------------------------- 목표 버스 일치 여부 확인 함수 -------------------------
 def tfBusNum(store_img, busNum, busLicenseNum):
@@ -510,14 +316,9 @@ def on_message(client, userdata, msg): # 최초 1번
         uuid = mytopic[1]
         print(">>>>>>>>>>>>>>>>>>>>>>>>>>>>" + uuid + "uuid 확인")
         print(myval)
-        base = '/home/lab08/yolov5/runs/hub/exp/crops/'
-#         img_pink = '/home/lab19/ai_env_mino/yolov5/' + uuid + '.jpg'
-        img_pink = '/home/lab08/yolov5/'+uuid+'.jpg'
-#         img_pink = '/home/lab08/yolov5/test_pink.jpg'
-
-#         img_bus = './test_bus.jpg'
-        img_bus = '/home/lab08/yolov5/'+uuid+'.jpg'
-#         img_bus = './'+uuid+'.jpg'
+        base = '/content/drive/Shareddrives/EyesOn/final/yolov5/runs/hub/exp/crops/'
+        img_pink = '/content/drive/Shareddrives/EyesOn/final/yolov5/'+uuid+'.jpg'
+        img_bus = '/content/drive/Shareddrives/EyesOn/final/yolov5/'+uuid+'.jpg'
         store_img = [base+'bus_num_fr/'+uuid+'.jpg', base+'bus_num_side/'+uuid+'.jpg', base+'license_plate/'+uuid+'.jpg']
 
          
@@ -527,9 +328,6 @@ def on_message(client, userdata, msg): # 최초 1번
                 print(busNum)
                 busLicenseNum = myval[3]
                 print(busLicenseNum)
-            #     uuid = '12345'
-#                 busNum = '5714'
-#                 busLicenseNum = '2914'
                 print("bigData last 확인")
 
 

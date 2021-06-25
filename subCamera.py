@@ -19,7 +19,7 @@ def on_message(client, userdata, msg):
     topicData = msg.topic.split("/")
     uuid = topicData[1]
     if str(type(msg.payload)) == "<class 'bytes'>":
-        with open('/home/lab19/ai_env_mino/yolov5/%s.jpg' %uuid, 'wb') as fd: #iris.jpg이름으로 파일 쓰기(wb는 바이트로 쓸때)
+        with open('/content/drive/Shareddrives/EyesOn/final/yolov5/%s.jpg' %uuid, 'wb') as fd: #iris.jpg이름으로 파일 쓰기(wb는 바이트로 쓸때)
             fd.write(msg.payload) # 메세지 받은걸 파일에 쓰기
             fd.close()
 
