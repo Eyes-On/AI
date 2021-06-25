@@ -5,7 +5,6 @@ import pandas as pd
 import cv2
 import numpy as np
 from matplotlib import pyplot as plt
-import pytesseract
 import easyocr
 import re
 import os
@@ -97,144 +96,144 @@ def objectDetection(img):
 reader = easyocr.Reader(['bn'])
 
 
-# ------------------------- OCR_v1 -------------------------
-# OCR 버전마다 전처리 과정이 다름
-def OCR_pn(img):
-    img = cv2.imread(img) # 이미지 로드
-    gray = cv2.cvtColor(img, cv2.COLOR_RGB2GRAY) # 배경에 그레이 적용
-    gray = cv2.resize(gray, None, fx = 3, fy = 3, interpolation = cv2.INTER_CUBIC) # 사이즈 정규화(키우기)
-    blur = cv2.GaussianBlur(gray, (5,5), 0) # 이미지에 블러 처리
+# # ------------------------- OCR_v1 -------------------------
+# # OCR 버전마다 전처리 과정이 다름
+# def OCR_pn(img):
+#     img = cv2.imread(img) # 이미지 로드
+#     gray = cv2.cvtColor(img, cv2.COLOR_RGB2GRAY) # 배경에 그레이 적용
+#     gray = cv2.resize(gray, None, fx = 3, fy = 3, interpolation = cv2.INTER_CUBIC) # 사이즈 정규화(키우기)
+#     blur = cv2.GaussianBlur(gray, (5,5), 0) # 이미지에 블러 처리
 
-    # ------------------- 기울기 조정 start -------------------
-    canny = cv2.Canny(blur, 700, 350, apertureSize = 5, L2gradient = True) # 이미지 외곽선만 추출
-    lines = cv2.HoughLinesP(canny, 1, np.pi / 180, 50, minLineLength = 3, maxLineGap = 150) # 직선 찾기
+#     # ------------------- 기울기 조정 start -------------------
+#     canny = cv2.Canny(blur, 700, 350, apertureSize = 5, L2gradient = True) # 이미지 외곽선만 추출
+#     lines = cv2.HoughLinesP(canny, 1, np.pi / 180, 50, minLineLength = 3, maxLineGap = 150) # 직선 찾기
 
-    angle = 0
-    maxdim = 0
-    # 각도 조정
-    if not (lines is None):
-        for i in lines:
-            xdim = i[0][2] - i[0][0]
-            ydim = i[0][3] - i[0][1]
-            iangle = math.atan2(ydim, xdim)*180/np.pi
-            dim = math.sqrt((xdim * xdim) + (ydim * ydim))
-            if abs(angle) < 40 and maxdim < dim:
-                maxdim = dim
-                angle =iangle
+#     angle = 0
+#     maxdim = 0
+#     # 각도 조정
+#     if not (lines is None):
+#         for i in lines:
+#             xdim = i[0][2] - i[0][0]
+#             ydim = i[0][3] - i[0][1]
+#             iangle = math.atan2(ydim, xdim)*180/np.pi
+#             dim = math.sqrt((xdim * xdim) + (ydim * ydim))
+#             if abs(angle) < 40 and maxdim < dim:
+#                 maxdim = dim
+#                 angle =iangle
 
-    roih, roiw, roic = img.shape
-    matrix = cv2.getRotationMatrix2D((roiw/2, roih/2), angle, 1)
-    roi = cv2.warpAffine(img, matrix, (roiw, roih))
-    # ------------------- 기울기 조정 fin -------------------
+#     roih, roiw, roic = img.shape
+#     matrix = cv2.getRotationMatrix2D((roiw/2, roih/2), angle, 1)
+#     roi = cv2.warpAffine(img, matrix, (roiw, roih))
+#     # ------------------- 기울기 조정 fin -------------------
 
-    roi = cv2.resize(roi, None, fx = 3, fy = 3, interpolation = cv2.INTER_CUBIC)
-    blur_2 = cv2.GaussianBlur(roi, (5,5), 0)
+#     roi = cv2.resize(roi, None, fx = 3, fy = 3, interpolation = cv2.INTER_CUBIC)
+#     blur_2 = cv2.GaussianBlur(roi, (5,5), 0)
     
-    plate_num = ""
-    try:
-        # tesseract OCR 적용
-        text = pytesseract.image_to_string(blur_2, config='-c tessedit_char_whitelist=0123456789 --psm 7 --oem 1') # whitelist: 숫자만 인식
-        plate_num = re.sub('[\W_]+', '', text) # 특수문자 제거
-    except:
-        text = None
+#     plate_num = ""
+#     try:
+#         # tesseract OCR 적용
+#         text = pytesseract.image_to_string(blur_2, config='-c tessedit_char_whitelist=0123456789 --psm 7 --oem 1') # whitelist: 숫자만 인식
+#         plate_num = re.sub('[\W_]+', '', text) # 특수문자 제거
+#     except:
+#         text = None
     
-    plate_num = re.sub('[\W_]+', '', text)   
-    return plate_num[-4:]
+#     plate_num = re.sub('[\W_]+', '', text)   
+#     return plate_num[-4:]
 
 
-# ------------------------- OCR_v2 -------------------------
-def OCR_pn2(img):
-    img = cv2.imread(img)
-    gray = cv2.cvtColor(img, cv2.COLOR_RGB2GRAY)
-    gray = cv2.resize(gray, None, fx = 3, fy = 3, interpolation = cv2.INTER_CUBIC)
-    blur = cv2.GaussianBlur(gray, (5,5), 0)
+# # ------------------------- OCR_v2 -------------------------
+# def OCR_pn2(img):
+#     img = cv2.imread(img)
+#     gray = cv2.cvtColor(img, cv2.COLOR_RGB2GRAY)
+#     gray = cv2.resize(gray, None, fx = 3, fy = 3, interpolation = cv2.INTER_CUBIC)
+#     blur = cv2.GaussianBlur(gray, (5,5), 0)
     
-    plate_num = ""
-    try:
-        text = pytesseract.image_to_string(blur, config='-c tessedit_char_whitelist=0123456789 --psm 7 --oem 1')
-        plate_num = re.sub('[\W_]+', '', text)            
-    except:
-        text = None
+#     plate_num = ""
+#     try:
+#         text = pytesseract.image_to_string(blur, config='-c tessedit_char_whitelist=0123456789 --psm 7 --oem 1')
+#         plate_num = re.sub('[\W_]+', '', text)            
+#     except:
+#         text = None
 
-    plate_num = re.sub('[\W_]+', '', text)   
-    return plate_num[-4:]
+#     plate_num = re.sub('[\W_]+', '', text)   
+#     return plate_num[-4:]
 
 
-# ------------------------- OCR_v3 -------------------------
-def OCR_pn3(img):
-    img = cv2.imread(img)
-    gray = cv2.cvtColor(img, cv2.COLOR_RGB2GRAY)
-    gray = cv2.resize(gray, None, fx = 3, fy = 3, interpolation = cv2.INTER_CUBIC)
-    blur = cv2.GaussianBlur(gray, (5,5), 0)
+# # ------------------------- OCR_v3 -------------------------
+# def OCR_pn3(img):
+#     img = cv2.imread(img)
+#     gray = cv2.cvtColor(img, cv2.COLOR_RGB2GRAY)
+#     gray = cv2.resize(gray, None, fx = 3, fy = 3, interpolation = cv2.INTER_CUBIC)
+#     blur = cv2.GaussianBlur(gray, (5,5), 0)
 
-    # ------------------- 기울기 조정 start -------------------
-    canny = cv2.Canny(blur, 700, 350, apertureSize = 5, L2gradient = True)
-    lines = cv2.HoughLinesP(canny, 1, np.pi / 180, 50, minLineLength = 3, maxLineGap = 150)
+#     # ------------------- 기울기 조정 start -------------------
+#     canny = cv2.Canny(blur, 700, 350, apertureSize = 5, L2gradient = True)
+#     lines = cv2.HoughLinesP(canny, 1, np.pi / 180, 50, minLineLength = 3, maxLineGap = 150)
 
-    angle = 0
-    maxdim = 0
-    if not (lines is None):
-        for i in lines:
-            xdim = i[0][2] - i[0][0]
-            ydim = i[0][3] - i[0][1]
-            iangle = math.atan2(ydim, xdim)*180/np.pi
-            dim = math.sqrt((xdim * xdim) + (ydim * ydim))
-            if abs(angle) < 40 and maxdim < dim:
-                maxdim = dim
-                angle =iangle
+#     angle = 0
+#     maxdim = 0
+#     if not (lines is None):
+#         for i in lines:
+#             xdim = i[0][2] - i[0][0]
+#             ydim = i[0][3] - i[0][1]
+#             iangle = math.atan2(ydim, xdim)*180/np.pi
+#             dim = math.sqrt((xdim * xdim) + (ydim * ydim))
+#             if abs(angle) < 40 and maxdim < dim:
+#                 maxdim = dim
+#                 angle =iangle
 
-    roih, roiw, roic = img.shape
-    matrix = cv2.getRotationMatrix2D((roiw/2, roih/2), angle, 1)
-    roi = cv2.warpAffine(img, matrix, (roiw, roih))
-    # ------------------- 기울기 조정 fin -------------------
+#     roih, roiw, roic = img.shape
+#     matrix = cv2.getRotationMatrix2D((roiw/2, roih/2), angle, 1)
+#     roi = cv2.warpAffine(img, matrix, (roiw, roih))
+#     # ------------------- 기울기 조정 fin -------------------
 
-    gray_2 = cv2.cvtColor(roi, cv2.COLOR_RGB2GRAY)
-    gray_2 = cv2.resize(gray_2, None, fx = 3, fy = 3, interpolation = cv2.INTER_CUBIC)
-    blur_2 = cv2.GaussianBlur(gray_2, (5,5), 0)
+#     gray_2 = cv2.cvtColor(roi, cv2.COLOR_RGB2GRAY)
+#     gray_2 = cv2.resize(gray_2, None, fx = 3, fy = 3, interpolation = cv2.INTER_CUBIC)
+#     blur_2 = cv2.GaussianBlur(gray_2, (5,5), 0)
 
-    ## 이미지 흑백 대조하기, 최적 임계값을 자동으로 추출하는 Otsus 사용
-    ret, thresh = cv2.threshold(blur_2, 0, 255, cv2.THRESH_OTSU | cv2.THRESH_BINARY_INV)
-    ## 확장을 위한 커널 생성
-    rect_kern = cv2.getStructuringElement(cv2.MORPH_RECT, (5,5))
-    ## 글씨 이미지 크기 확장
-    dilation = cv2.dilate(thresh, rect_kern, iterations = 1)
+#     ## 이미지 흑백 대조하기, 최적 임계값을 자동으로 추출하는 Otsus 사용
+#     ret, thresh = cv2.threshold(blur_2, 0, 255, cv2.THRESH_OTSU | cv2.THRESH_BINARY_INV)
+#     ## 확장을 위한 커널 생성
+#     rect_kern = cv2.getStructuringElement(cv2.MORPH_RECT, (5,5))
+#     ## 글씨 이미지 크기 확장
+#     dilation = cv2.dilate(thresh, rect_kern, iterations = 1)
 
-    blur_3 = cv2.GaussianBlur(dilation, (5,5), 0)
+#     blur_3 = cv2.GaussianBlur(dilation, (5,5), 0)
     
-    plate_num = ""
-    try:
-        text = pytesseract.image_to_string(blur_3, config='-c tessedit_char_whitelist=0123456789 --psm 7 --oem 1')
-        plate_num = re.sub('[\W_]+', '', text)            
-    except:
-        text = None
+#     plate_num = ""
+#     try:
+#         text = pytesseract.image_to_string(blur_3, config='-c tessedit_char_whitelist=0123456789 --psm 7 --oem 1')
+#         plate_num = re.sub('[\W_]+', '', text)            
+#     except:
+#         text = None
     
-    plate_num = re.sub('[\W_]+', '', text)   
-    return plate_num[-4:]
+#     plate_num = re.sub('[\W_]+', '', text)   
+#     return plate_num[-4:]
             
         
-# ------------------------- OCR_v4 -------------------------
-def OCR_bn(img):
-    img = cv2.imread(img)
-    gray = cv2.cvtColor(img, cv2.COLOR_RGB2GRAY)
-    gray = cv2.resize(gray, None, fx = 3, fy = 3, interpolation = cv2.INTER_CUBIC)
-    blur = cv2.GaussianBlur(gray, (5,5), 0)
+# # ------------------------- OCR_v4 -------------------------
+# def OCR_bn(img):
+#     img = cv2.imread(img)
+#     gray = cv2.cvtColor(img, cv2.COLOR_RGB2GRAY)
+#     gray = cv2.resize(gray, None, fx = 3, fy = 3, interpolation = cv2.INTER_CUBIC)
+#     blur = cv2.GaussianBlur(gray, (5,5), 0)
     
-    ## 이미지 흑백 대조하기, 최적 임계값을 자동으로 추출하는 Otsus 사용
-    ret, thresh = cv2.threshold(blur, 0, 255, cv2.THRESH_OTSU | cv2.THRESH_BINARY_INV)
-    ## 확장을 위한 커널 생성
-    rect_kern = cv2.getStructuringElement(cv2.MORPH_RECT, (5,5))
-    ## 글씨 이미지 크기 확장
-    dilation = cv2.dilate(thresh, rect_kern, iterations = 1)
-    blur_2 = cv2.GaussianBlur(dilation, (5,5), 0)
+#     ## 이미지 흑백 대조하기, 최적 임계값을 자동으로 추출하는 Otsus 사용
+#     ret, thresh = cv2.threshold(blur, 0, 255, cv2.THRESH_OTSU | cv2.THRESH_BINARY_INV)
+#     ## 확장을 위한 커널 생성
+#     rect_kern = cv2.getStructuringElement(cv2.MORPH_RECT, (5,5))
+#     ## 글씨 이미지 크기 확장
+#     dilation = cv2.dilate(thresh, rect_kern, iterations = 1)
+#     blur_2 = cv2.GaussianBlur(dilation, (5,5), 0)
     
-    plate_num = ""
-    try:
-        text = pytesseract.image_to_string(blur_2, config='-c tessedit_char_whitelist=0123456789 --psm 7 --oem 1')            
-    except:
-        text = None
+#     plate_num = ""
+#     try:
+#         text = pytesseract.image_to_string(blur_2, config='-c tessedit_char_whitelist=0123456789 --psm 7 --oem 1')            
+#     except:
+#         text = None
         
-    plate_num = re.sub('[\W_]+', '', text)   
-    return plate_num[-4:]
+#     plate_num = re.sub('[\W_]+', '', text)   
+#     return plate_num[-4:]
 
 # ------------------------- OCR_v5 -------------------------
 def OCR_easy(img):
@@ -556,7 +555,7 @@ mqttClient.on_connect = on_connect
 mqttClient.on_message = on_message
 
 # 브로커에 연결하기
-mqttClient.connect("15.164.46.54", 1883, 60)
+mqttClient.connect("13.124.134.89", 1883, 60)
 
 # 토픽이 전달될때까지 수신대기
 mqttClient.loop_forever()
